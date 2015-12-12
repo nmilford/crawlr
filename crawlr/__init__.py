@@ -27,7 +27,7 @@ class Crawlr:
     self.crawl_data = {}
     self.crawl_data['failure'] = False
     self.crawl_data['url'] = self.url
-    self.crawl_data['id'] = mmh3.hash(self.url)
+    self.crawl_data['id'] = mmh3.hash128(self.url)
 
   def url(self):
     return self.url
@@ -45,12 +45,18 @@ class Crawlr:
     except requests.exceptions.Timeout:
       self.crawl_data['failure'] = True
       self.crawl_data['last_failure'] = 'Timeout'
+    except requests.exceptions.ConnectionError:
+      self.crawl_data['failure'] = True
+      self.crawl_data['last_failure'] = 'ConnectionError'
+    except requests.exceptions.HTTPError:
+      self.crawl_data['failure'] = True
+      self.crawl_data['last_failure'] = 'HTTPError'
     except requests.exceptions.TooManyRedirects:
       self.crawl_data['failure'] = True
       self.crawl_data['last_failure'] = 'TooManyRedirects'
     except requests.exceptions.RequestException as e:
       self.crawl_data['failure'] = True
-      self.crawl_data['last_failure'] = 'timeout'
+      self.crawl_data['last_failure'] = e 
 
     if self.crawl_data['failure'] == False: 
       soup = bs4.BeautifulSoup(response.text)
