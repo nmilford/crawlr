@@ -5,6 +5,17 @@ import time
 import bs4
 
 class Crawlr:
+  """
+  Crawls a given URL and returns a dict containing
+  {
+    'crawled_at': integer pf the unixtime of the crawl,
+    'title': string of the URL's title,
+    'body': string of the URL's text,
+    'internal_links': list of links containing the original URL's TLD,
+    'external_links': list of links not containing the original URL's TLD
+  }
+  """
+
   def __init__(self, url):
     self.crawl_data = {}
     self.url = urlnorm.norm(url)
@@ -26,9 +37,11 @@ class Crawlr:
       if a['href'].startswith('http'):
         links.append(urlnorm.norm(a['href']))
 
+    # Remove dupe urls as we normalize them upon adding them to the list.
     links = list(set(links))
 
     for link in links:
+      # The 3rd '/' in a normalized url seperates the domain from the path.
       if self.tld in link.split('/')[2]:
         self.crawl_data['internal_links'].append(link)
       else:
