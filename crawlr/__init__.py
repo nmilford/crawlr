@@ -2,13 +2,17 @@ from tld import get_tld
 import requests
 import urlnorm
 import time
+import mmh3
 import bs4
 
 class Crawlr:
   """
   Crawls a given URL and returns a dict containing
   {
-    'crawled_at': integer pf the unixtime of the crawl,
+    'failures': integer of the number of failures,
+    'url_id': MurmerHash3 of the normalized URL to use as an ID,
+    'url': normalized URL,
+    'crawled_at': integer of the unixtime of the crawl,
     'title': string of the URL's title,
     'body': string of the URL's text,
     'internal_links': list of links containing the original URL's TLD,
@@ -20,16 +24,21 @@ class Crawlr:
     self.crawl_data = {}
     self.url = urlnorm.norm(url)
     self.tld = get_tld(url).encode('ascii','ignore')
+    self.crawl_data['url'] = self.url
+    self.crawl_data['id'] = mmh3.hash(self.url)
 
   def url(self):
     return self.url
+
+  def id(self):
+    return self.crawl_data['id']
 
   def crawl(self):
     response = requests.get(self.url)
     soup = bs4.BeautifulSoup(response.text)
     self.crawl_data['crawled_at'] = int(time.time())
-    self.crawl_data['title'] = soup.html.head.title.get_text().encode('ascii','ignore')
-    self.crawl_data['body'] = '\n'.join([''.join(s.findAll(text=True))for s in soup.findAll('p')]).encode('ascii','ignore')
+    self.crawl_data['title'] = soup.html.head.title.get_text() #.encode('ascii','ignore')
+    self.crawl_data['body'] = '\n'.join([''.join(s.findAll(text=True))for s in soup.findAll('p')]) #.encode('ascii','ignore')
     self.crawl_data['internal_links'] = []
     self.crawl_data['outbound_links'] = []
     links = []
