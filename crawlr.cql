@@ -9,8 +9,8 @@ CREATE TABLE pages (
   last_failure text,
   title text,
   body text,
-  internal_links set<text>,
-  outbound_links set<text>,
+  internal_links text,
+  outbound_links text,
   PRIMARY KEY (id)
 );
 
