@@ -20,6 +20,36 @@ class Crawlr:
 
     self.cassandra_cluster = ['127.0.0.1']
     self.keyspace = 'crawlr'
+    self.cluster = Cluster(self.cassandra_cluster)
+    self.session = self.cluster.connect(self.keyspace)
+    self.session.row_factory = dict_factory
+
+    # Prepared Cassandra queries.
+    self.check_prepped_stmt = self.session.prepare(
+      """
+        SELECT id FROM pages WHERE id = ?;
+      """)
+    self.add_fail_prepped_stmt = self.session.prepare(
+      """
+        UPDATE failure_counts SET failures = failures + 1 WHERE id = ?;
+      """)
+    self.del_fail_prepped_stmt = self.session.prepare(
+      """
+        DELETE failures FROM failure_counts where id = ?;
+      """)
+    self.add_crawl_prepped_stmt = self.session.prepare(
+      """
+        INSERT INTO pages (
+          id,
+          url,
+          crawled_at,
+          failure,
+          title, 
+          body,
+          internal_links,
+          outbound_links)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      """)
 
   def parse_links(self):
     links = []
@@ -87,22 +117,43 @@ class Crawlr:
       self.parse_links()
     return self.crawl_data
 
-  def write_crawl_date(self):
-    cluster = Cluster(self.cassandra_cluster)
-    session = cluster.connect(self.keyspace)
-    session.row_factory = dict_factory
+  def add_crawl_failure(self):
+    bound_stmt = self.add_fail_prepped_stmt.bind([self.crawl_data['id']])
+    self.session.execute(bound_stmt)
 
-    session.execute(
-      """
-      INSERT INTO pages (
-        id, url, crawled_at, failure, title, body, internal_links, outbound_links)
-      VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-      """,(self.crawl_data['id'],
-           self.crawl_data['url'],
-           datetime_from_timestamp(self.crawl_data['crawled_at']),
-           self.crawl_data['failure'],
-           self.crawl_data['title'],
-           self.crawl_data['body'],
-           self.crawl_data['internal_links'],
-           self.crawl_data['outbound_links'])
-     )
+  def reset_crawl_failures(self):
+    bound_stmt = self.del_fail_prepped_stmt.bind([self.crawl_data['id']])
+    self.session.execute(bound_stmt)
+
+  def crawled_before(self):
+    bound_stmt = self.check_prepped_stmt.bind([self.crawl_data['id']])
+    rows = self.session.execute(bound_stmt)
+    # Is empty if false, no record of crawl.
+    return bool(rows)
+
+  def write_crawl_data(self):
+    bound_stmt = self.add_crawl_prepped_stmt.bind([
+      self.crawl_data['id'],
+      self.crawl_data['url'],
+      datetime_from_timestamp(self.crawl_data['crawled_at']),
+      self.crawl_data['failure'],
+      self.crawl_data['title'],
+      self.crawl_data['body'],
+      self.crawl_data['internal_links'],
+      self.crawl_data['outbound_links']])
+    self.session.execute(bound_stmt)
+
+   # self.session.execute(
+   #   """
+   #   INSERT INTO pages (
+   #     id, url, crawled_at, failure, title, body, internal_links, outbound_links)
+   #   VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+   #   """,(self.crawl_data['id'],
+   #        self.crawl_data['url'],
+   #        datetime_from_timestamp(self.crawl_data['crawled_at']),
+   #        self.crawl_data['failure'],
+   #        self.crawl_data['title'],
+   #        self.crawl_data['body'],
+   #        self.crawl_data['internal_links'],
+   #        self.crawl_data['outbound_links'])
+   #  )
