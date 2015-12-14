@@ -1,0 +1,22 @@
+#!/usr/bin/env python
+from flask import Flask
+from flask import jsonify
+from flask import request
+
+app = Flask(__name__)
+
+@app.route('/crawl', methods=["POST"])
+def crawl():
+  args = request.get_json()
+
+  a = {
+    'status': 'OK',
+    'url': args['url']
+  }
+
+  return jsonify(a)
+
+if __name__ == '__main__':
+  app.run()
+
+  # curl -H "Content-Type: application/json" -X POST -d '{"url":"http://www.clockworkfoundry.com"}' http://127.0.0.1:5000/crawl
