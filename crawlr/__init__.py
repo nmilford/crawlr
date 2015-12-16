@@ -8,6 +8,8 @@ import time
 import mmh3
 import bs4
 
+__version__ = '0.0.1'
+
 class Crawlr:
   def __init__(self, url):
     self.url = urlnorm.norm(url)
@@ -44,7 +46,7 @@ class Crawlr:
           url,
           crawled_at,
           failure,
-          title, 
+          title,
           body,
           internal_links,
           outbound_links)
@@ -142,18 +144,3 @@ class Crawlr:
       self.crawl_data['internal_links'],
       self.crawl_data['outbound_links']])
     self.session.execute(bound_stmt)
-
-   # self.session.execute(
-   #   """
-   #   INSERT INTO pages (
-   #     id, url, crawled_at, failure, title, body, internal_links, outbound_links)
-   #   VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-   #   """,(self.crawl_data['id'],
-   #        self.crawl_data['url'],
-   #        datetime_from_timestamp(self.crawl_data['crawled_at']),
-   #        self.crawl_data['failure'],
-   #        self.crawl_data['title'],
-   #        self.crawl_data['body'],
-   #        self.crawl_data['internal_links'],
-   #        self.crawl_data['outbound_links'])
-   #  )
