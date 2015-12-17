@@ -1,24 +1,23 @@
 from cassandra.util import datetime_from_timestamp
 from cassandra.query import dict_factory
 from cassandra.cluster import Cluster
-from tld import get_tld
+#import crawlr.db
+import crawlr.util
 import requests
-import urlnorm
 import time
-import mmh3
 import bs4
 
 __version__ = '0.0.1'
 
 class Crawlr:
   def __init__(self, url):
-    self.url = urlnorm.norm(url)
-    self.tld = get_tld(url).encode('ascii','ignore')
+    self.url = crawlr.util.normalize_url(url)
+    self.tld = crawlr.util.get_tld(url)
 
     self.crawl_data = {}
     self.crawl_data['failure'] = False
     self.crawl_data['url'] = self.url
-    self.crawl_data['id'] = mmh3.hash64(self.url)[0]
+    self.crawl_data['id'] = crawlr.util.get_url_id(self.url)
 
     self.cassandra_cluster = ['127.0.0.1']
     self.keyspace = 'crawlr'
@@ -60,7 +59,7 @@ class Crawlr:
 
     for a in self.soup.findAll('a'):
       if a['href'].startswith('http'):
-        links.append(urlnorm.norm(a['href']))
+        links.append(crawlr.util.normalize_url(a['href']))
 
     # Remove dupe urls as we normalize them upon adding them to the list.
     links = list(set(links))
