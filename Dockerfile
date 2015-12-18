@@ -5,9 +5,11 @@ RUN apt-get install -y \
             python-pip \
             python-dev \
             libev4 \
-            libev-dev 
-#            build-essential \
-#            git 
+            libev-dev \ 
+            nodejs-legacy \
+            npm 
+RUN npm -g install phantomjs
+
 ADD . /crawlr
 
 RUN pip install -r /crawlr/requirements.txt
