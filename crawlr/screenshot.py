@@ -1,5 +1,6 @@
 from selenium import webdriver
 import crawlr.util
+import os
 
 class ScreenShot:
   def __init__(self, url, keywords=[]):
@@ -16,9 +17,8 @@ class ScreenShot:
       js = """
         var from = "%s";
         var to = "<span style='background-color: #FFFF00; color:black;'>" + from + "</span>";
-        document.body.innerHTML = document.body.innerHTML.replace(/from/g, to);
+        document.body.innerHTML = document.body.innerHTML.replace(new RegExp(from, 'g'), to);
       """ % keyword
-
       self.browser.execute_script(js)
 
   def write_screenshot(self):
@@ -26,8 +26,4 @@ class ScreenShot:
       self.highlight_keywords()
 
     self.browser.save_screenshot(self.filename)
-
-
-
-
-
+    return os.getcwd() + "/" + self.filename
