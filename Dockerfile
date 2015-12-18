@@ -15,4 +15,4 @@ ADD . /crawlr
 RUN pip install -r /crawlr/requirements.txt
 WORKDIR /crawlr
 EXPOSE 5000
-CMD ./bin/crawlr-api
+CMD ./crawlr-cli api
